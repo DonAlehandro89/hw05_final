@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %} {{ author.first_name }} {{ author.last_name }} @{{ author.username }} {% endblock %}
+{% block content %}
+<main role="main" class="container">
+    <div class="row">
+            {% include 'basic/about_author.html' %}
+            <div class="col-md-9">                
+                <!-- Начало блока с отдельным постом --> 
+                 {% for post in page %}
+                    {% include "basic/post_item.html" with post=post %}
+                {% endfor %}  
+                <!-- Конец блока с отдельным постом --> 
+                <!-- Остальные посты -->
+                {% if page.has_other_pages %}
+                {% include "basic/paginator.html" with items=page paginator=paginator %}
+                {% endif %}  
+                <!-- Здесь постраничная навигация паджинатора -->
+     </div>
+     </div>
+</main> 
+{% endblock %}

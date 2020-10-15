@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %} {{ author.first_name }} {{ author.last_name }} @{{ author.username }} {% endblock %}
+{% block content %}
+<main role="main" class="container">
+    <div class="row">
+        {% include 'basic/about_author.html' %}
+        <div class="col-md-9">
+        {% include "basic/post_item.html" with post=post %}
+        {% include 'basic/comments.html' with form=form comments=comments%}
+        </div>
+    </div>
+</main> 
+{% endblock %}
