@@ -6,7 +6,7 @@
         {% include 'basic/about_author.html' %}
         <div class="col-md-9">
         {% include "basic/post_item.html" with post=post %}
-        {% include 'basic/comments.html' with form=form comments=comments%}
+        {% include 'basic/comments.html' with form=form comments=post.comments.all%}
         </div>
     </div>
 </main> 

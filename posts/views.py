@@ -74,10 +74,8 @@ def profile(request, username):
 def post_view(request, username, post_id):
     post = get_object_or_404(Post, id=post_id, author__username=username)
     form = CommentForm()
-    comments = post.comments.all()[:10]
     return render(request, 'post.html', {'author': post.author,
                                          'post': post,
-                                         'comments': comments,
                                          'form': form})
 
 
