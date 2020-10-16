@@ -140,15 +140,12 @@ class TestBasicFunctions(TestCase):
 
     def test_fake_image_upload(self):
             err='Загрузите правильное изображение. Файл, который вы загрузили, поврежден или не является изображением.'
-                
-            #with open('media/posts/vk.png', 'rb') as img:
             with open('requirements.txt', 'rb') as img:
                 text = 'testtesttest'
                 response = self.client.post(reverse('new_post'),
                                              {'text': text,
                                             'image': img})
                 self.assertFormError(response, 'form', 'image',err)
-            #self.assertEqual(Post.objects.count(), 0)
 
 
     def test_true_image_upload(self):
