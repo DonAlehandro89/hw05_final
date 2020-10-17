@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 
 
 def index(request):
-    post_list = Post.objects.order_by('-pub_date').all()
+    post_list = Post.objects.all()
     paginator = Paginator(post_list, 10)
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
@@ -54,11 +54,9 @@ def add_comment(request,username,post_id):
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    #f = get_object_or_404(Follow, user=request.user, author=author)
     following = False
-    if request.user.is_authenticated:
-        if Follow.objects.filter(author__username=username, user=request.user):
-            following = True
+    if request.user.is_authenticated and Follow.objects.filter(author__username=username, user=request.user).exists():
+        following = True
     post_list = author.posts.all().order_by("-pub_date")
     paginator = Paginator(post_list, 10)
     page_number = request.GET.get('page')
@@ -109,12 +107,6 @@ def follow_index(request):
 
 
 @login_required
-def profile_unfollow(request, username):
-    Follow.objects.filter(author__username=username, user=request.user).delete()
-    return redirect('index')
-
-
-@login_required
 def profile_follow(request, username):
     author = get_object_or_404(User, username=username)
     is_follow = Follow.objects.filter(author__username=username,
@@ -122,6 +114,13 @@ def profile_follow(request, username):
     if request.user != author and not is_follow:
         Follow.objects.create(author=author,
                                         user=request.user)
+    return redirect('index')
+
+
+@login_required
+def profile_unfollow(request, username):
+    if Follow.objects.filter(author__username=username, user=request.user).exists():
+        Follow.objects.filter(author__username=username, user=request.user).delete()
     return redirect('index')
 
 

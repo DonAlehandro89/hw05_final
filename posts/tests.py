@@ -3,6 +3,10 @@ from .models import Post, Group, User, Follow, Comment
 from django.shortcuts import reverse
 from django.core.cache import caches, cache
 from django.core.cache.utils import make_template_fragment_key
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.files.base import File
+from PIL import Image
+from io import BytesIO
 
 
 class TestBasicFunctions(TestCase):
@@ -20,6 +24,7 @@ class TestBasicFunctions(TestCase):
             title='testtitle1', slug='testslug1')
         self.client.force_login(self.user)
         self.client_not_authorized = Client()
+        self.image = 'requirements.txt'
 
 
     def check_url(self, url, text, author, group):
@@ -34,6 +39,20 @@ class TestBasicFunctions(TestCase):
             self.assertEqual(
                 getattr(post, attribute),
                 attrs[attribute])
+
+    
+    def check_url_has_image(self, url):
+        response = self.client.get(url)
+        self.assertContains(response, '<img')
+
+
+    @staticmethod
+    def get_image_file(name='test.png', ext='png', size=(50, 50), color=(256, 0, 0)):
+        file_obj = BytesIO()
+        image = Image.new("RGBA", size=size, color=color)
+        image.save(file_obj, ext)
+        file_obj.seek(0)
+        return File(file_obj, name=name)
 
 
     def test_cache(self):
@@ -116,9 +135,6 @@ class TestBasicFunctions(TestCase):
         self.assertEqual(Post.objects.count(), 0)
     
     def test_follow(self):
-        text = 'testtesttest'
-        self.post = Post.objects.create(text=text, author=self.user1,
-                                        group=self.group)
         self.client.post(reverse('profile_follow',
                                  args=[self.user1]),
                          {'author': self.user1,
@@ -127,9 +143,17 @@ class TestBasicFunctions(TestCase):
         follow = Follow.objects.first()
         self.assertEqual(follow.author, self.user1)
         self.assertEqual(follow.user, self.user)
+
+
+    def test_unfollow(self):
+        text = 'testtesttest'
         url = reverse('follow_index')
-        self.check_url(url=url, text=text,
-                       author=self.user1, group=self.group)
+        self.post = Post.objects.create(text=text, author=self.user1,
+                                        group=self.group)
+        self.client.post(reverse('profile_follow',
+                                 args=[self.user1]),
+                         {'author': self.user1,
+                          'user': self.user})
         self.client.post(reverse('profile_unfollow',
                                  args=[self.user1]),
                          {'author': self.user1,
@@ -138,31 +162,43 @@ class TestBasicFunctions(TestCase):
         response = self.client.get(url)
         self.assertEqual(len(response.context['page'].object_list), 0)
 
+    
+    def test_follow_view(self):
+        text = 'testtesttest'
+        url = reverse('follow_index')
+        self.post = Post.objects.create(text=text, author=self.user1,
+                                        group=self.group)
+        self.client.post(reverse('profile_follow',
+                                 args=[self.user1]),
+                         {'author': self.user1,
+                          'user': self.user})
+        self.check_url(url=url, text=text,
+                       author=self.user1, group=self.group)
+
+
     def test_fake_image_upload(self):
-            err='Загрузите правильное изображение. Файл, который вы загрузили, поврежден или не является изображением.'
-            with open('requirements.txt', 'rb') as img:
-                text = 'testtesttest'
-                response = self.client.post(reverse('new_post'),
-                                             {'text': text,
-                                            'image': img})
-                self.assertFormError(response, 'form', 'image',err)
+        err='Загрузите правильное изображение. Файл, который вы загрузили, поврежден или не является изображением.'
+        not_image = SimpleUploadedFile("test.txt", b"file_content")
+        text = 'testtesttest'
+        response = self.client.post(reverse('new_post'),
+                                        {'text': text,
+                                        'image': not_image})
+        self.assertFormError(response, 'form', 'image',err)
 
 
     def test_true_image_upload(self):
-        with open('media/posts/vk.png', 'rb') as img:
-            text = 'testtesttest1111'
-            response = self.client.post(reverse('new_post'),
-                                       {'text': text,
-                                        'group': self.group.id,
-                                        'image': img})
-        response = self.client.get(reverse("profile", args=[self.user.username]))
-        self.assertContains(response, '<img')
-        response = self.client.get(reverse('post', args=[self.user, 1]))
-        self.assertContains(response, '<img')
+        image=self.get_image_file()
+        text = 'testtesttest1111'
+        response = self.client.post(reverse('new_post'),
+                                    {'text': text,
+                                    'group': self.group.id,
+                                    'image': image})
         cache.clear()
-        response = self.client.get(reverse("index"))
-        self.assertContains(response, '<img')
-        response = self.client.get(reverse("groups", args=[self.group.slug]))
-        self.assertContains(response, '<img')
-
-
+        urls = [
+            reverse("index"),
+            reverse("profile", args=[self.user.username]),
+            reverse('post', args=[self.user, 1]),
+            reverse("groups", args=[self.group.slug]),
+        ]
+        for url in urls:
+            self.check_url_has_image(url=url)

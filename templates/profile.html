@@ -3,7 +3,7 @@
 {% block content %}
 <main role="main" class="container">
     <div class="row">
-            {% include 'basic/about_author.html' %}
+            {% include 'basic/about_author.html' with need_follow=True %}
             <div class="col-md-9">                
                 <!-- Начало блока с отдельным постом --> 
                  {% for post in page %}

@@ -11,49 +11,46 @@
                             {{ error }}
                         </div>
                     {% endfor %}
-
-  <body>
-  {% if is_edit %}
-  <h1>Редактировать запись</h1>
-  {% else %}
-  <h1>Добавить запись</h1>
-  {% endif %}
-<p class="lead">
-    Введите текст своего поста и укажите группу, если таковая имеется.
-  </p>
-  {% if is_edit %}
-  <form method="post" enctype="multipart/form-data" action="{% url 'post_edit' request.user post.id%}">
-  {% else %}
-  <form method="post" enctype="multipart/form-data" action="{% url 'new_post' %}">
-  {% endif %} 
-    {% csrf_token %}
-  {% for field in form %}
-                        <div class="form-group row" aria-required={% if field.field.required %}"true"{% else %}"false"{% endif %}>
-                                <label for="{{ field.id_for_label }}" class="col-md-4 col-form-label text-md-right">{{ field.label }}{% if field.field.required %}<span class="required">*</span>{% endif %}</label>
-                                <div class="col-md-6">
-                                    {{ field }}
-                                    {% if field.help_text %}
-                                    <small id="{{ field.id_for_label }}-help" class="form-text text-muted">{{ field.help_text|safe }}</small>
-                                    {% endif %}
-                                </div>
-                        </div>
-                    {% endfor %}
-      <div class="col-md-6 offset-md-4">              
-                            <button type="submit" class="btn btn-primary">
-                                {% if is_edit %}
+           <body>
+                {% if is_edit %}
+                    <h1>Редактировать запись</h1>
+                {% else %}
+                    <h1>Добавить запись</h1>
+                {% endif %}
+            <p class="lead">
+                Введите текст своего поста и укажите группу, если таковая имеется.
+            </p>
+            {% if is_edit %}
+                <form method="post" enctype="multipart/form-data" action="{% url 'post_edit' request.user post.id%}">
+            {% else %}
+                <form method="post" enctype="multipart/form-data" action="{% url 'new_post' %}">
+            {% endif %} 
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="form-group row" aria-required={% if field.field.required %}"true"{% else %}"false"{% endif %}>
+                    <label for="{{ field.id_for_label }}" class="col-md-4 col-form-label text-md-right">{{ field.label }}{% if field.field.required %}<span class="required">*</span>{% endif %}</label>
+                    <div class="col-md-6">
+                        {{ field }}
+                        {% if field.help_text %}
+                            <small id="{{ field.id_for_label }}-help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+                    <div class="col-md-6 offset-md-4">              
+                        <button type="submit" class="btn btn-primary">
+                            {% if is_edit %}
                                 Сохранить
-                                {% else %}
+                            {% else %}
                                 Добавить
-                                {% endif %} 
-
-                            </button>
+                            {% endif %} 
+                        </button>
                     </div>
                 </form>
             </div> <!-- card body -->
         </div> <!-- card -->
     </div> <!-- col -->
 </div> <!-- row -->
-
 {% endblock %} 
 
  

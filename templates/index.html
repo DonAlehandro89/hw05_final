@@ -3,18 +3,15 @@
 {% block header %}Последние обновления на сайте{% endblock %}
 {% block content %}
     {% include "basic/menu.html" with index=True %}
-    {% load thumbnail %}
-    {% load cache %}
-    {% cache 3 index_page %}
-    {% for post in page %}
-    {% include "basic/post_item.html" with post=post %}
-    {% endfor %}
-    {% endcache %} 
+        {% load thumbnail %}
+        {% load cache %}
+        {% cache 3 index_page %}
+            {% for post in page %}
+                {% include "basic/post_item.html" with post=post %}
+            {% endfor %}
+        {% endcache %} 
 
-    {% if page.has_other_pages %}
-    {% include "basic/paginator.html" with items=page paginator=paginator %}
-    {% endif %}
-
-    
-
+        {% if page.has_other_pages %}
+            {% include "basic/paginator.html" with items=page paginator=paginator %}
+        {% endif %}
 {% endblock %}

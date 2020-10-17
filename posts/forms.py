@@ -25,4 +25,3 @@ class CommentForm(ModelForm):
         fields = ('text',)
         text = forms.CharField(widget=forms.Textarea)
     
-
