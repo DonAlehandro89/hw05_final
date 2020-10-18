@@ -3,7 +3,7 @@
 {% block content %}
 <main role="main" class="container">
     <div class="row">
-        {% include 'basic/about_author.html' %}
+        {% include 'basic/about_author.html' with author=author %}
         <div class="col-md-9">
         {% include "basic/post_item.html" with post=post %}
         {% include 'basic/comments.html' with form=form comments=post.comments.all%}

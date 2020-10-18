@@ -1,4 +1,4 @@
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 from .models import Post, Group, User, Follow, Comment
 from django.shortcuts import reverse
 from django.core.cache import caches, cache
@@ -24,7 +24,6 @@ class TestBasicFunctions(TestCase):
             title='testtitle1', slug='testslug1')
         self.client.force_login(self.user)
         self.client_not_authorized = Client()
-        self.image = 'requirements.txt'
 
 
     def check_url(self, url, text, author, group):
@@ -39,12 +38,6 @@ class TestBasicFunctions(TestCase):
             self.assertEqual(
                 getattr(post, attribute),
                 attrs[attribute])
-
-    
-    def check_url_has_image(self, url):
-        response = self.client.get(url)
-        self.assertContains(response, '<img')
-
 
     @staticmethod
     def get_image_file(name='test.png', ext='png', size=(50, 50), color=(256, 0, 0)):
@@ -89,10 +82,10 @@ class TestBasicFunctions(TestCase):
 
     def test_post(self):
         text = 'testtesttest'
-        self.post = Post.objects.create(text=text, author=self.user,
+        post = Post.objects.create(text=text, author=self.user,
                                         group=self.group)
         urls = [
-            reverse('post', args=[self.post.author, self.post.id]),
+            reverse('post', args=[post.author, post.id]),
             reverse('index'),
             reverse("profile", args=[self.user.username]),
             reverse("groups", args=[self.group.slug]),
@@ -104,16 +97,16 @@ class TestBasicFunctions(TestCase):
     def test_authorized_user_edit_post(self):
         text = 'testtesttest'
         text1 = 'edit_test'
-        self.post = Post.objects.create(text=text1,
+        post = Post.objects.create(text=text1,
                                         author=self.user,
                                         group=self.group1)
         self.client.post(reverse('post_edit',
-                                 args=[self.post.author,
-                                       self.post.id]),
+                                 args=[post.author,
+                                       post.id]),
                          {'text': text,
                           'group': self.group.id})
         urls = [
-            reverse('post', args=[self.post.author, self.post.id]),
+            reverse('post', args=[post.author, post.id]),
             reverse('index'),
             reverse("groups", args=[self.group.slug])
         ]
@@ -124,6 +117,7 @@ class TestBasicFunctions(TestCase):
                 reverse("groups", args=[self.group1.slug])
             )
         self.assertEqual(len(response.context["page"]), 0)
+
 
     def test_no_authorized_user_post(self):
         text = 'testtesttest'
@@ -148,7 +142,7 @@ class TestBasicFunctions(TestCase):
     def test_unfollow(self):
         text = 'testtesttest'
         url = reverse('follow_index')
-        self.post = Post.objects.create(text=text, author=self.user1,
+        Post.objects.create(text=text, author=self.user1,
                                         group=self.group)
         self.client.post(reverse('profile_follow',
                                  args=[self.user1]),
@@ -166,7 +160,7 @@ class TestBasicFunctions(TestCase):
     def test_follow_view(self):
         text = 'testtesttest'
         url = reverse('follow_index')
-        self.post = Post.objects.create(text=text, author=self.user1,
+        Post.objects.create(text=text, author=self.user1,
                                         group=self.group)
         self.client.post(reverse('profile_follow',
                                  args=[self.user1]),
@@ -185,7 +179,7 @@ class TestBasicFunctions(TestCase):
                                         'image': not_image})
         self.assertFormError(response, 'form', 'image',err)
 
-
+    @override_settings(CACHES={'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}})
     def test_true_image_upload(self):
         image=self.get_image_file()
         text = 'testtesttest1111'
@@ -193,7 +187,6 @@ class TestBasicFunctions(TestCase):
                                     {'text': text,
                                     'group': self.group.id,
                                     'image': image})
-        cache.clear()
         urls = [
             reverse("index"),
             reverse("profile", args=[self.user.username]),
@@ -201,4 +194,22 @@ class TestBasicFunctions(TestCase):
             reverse("groups", args=[self.group.slug]),
         ]
         for url in urls:
-            self.check_url_has_image(url=url)
+            response = self.client.get(url)
+            self.assertContains(response, '<img')
+
+
+    def test_add_comment(self):
+        text = 'test'
+        post = Post.objects.create(text=text,
+                                   author=self.user,
+                                    )
+        self.client.post(reverse('add_comment',
+                                 args=[post.author,
+                                       post.id]),
+                         {'author': self.user,
+                          'text': text,
+                          'post' : post.id})
+        comment = post.comments.first()
+        self.assertEqual(comment.author, self.user)
+        self.assertEqual(comment.text, text)
+        
