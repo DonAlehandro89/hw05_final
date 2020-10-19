@@ -148,10 +148,9 @@ class TestBasicFunctions(TestCase):
                                  args=[self.user1]),
                          {'author': self.user1,
                           'user': self.user})
-        self.client.post(reverse('profile_unfollow',
+        self.client.get(reverse('profile_unfollow',
                                  args=[self.user1]),
-                         {'author': self.user1,
-                          'user': self.user})
+                         )
         self.assertEqual(Follow.objects.count(), 0)
         response = self.client.get(url)
         self.assertEqual(len(response.context['page'].object_list), 0)
@@ -212,4 +211,18 @@ class TestBasicFunctions(TestCase):
         comment = post.comments.first()
         self.assertEqual(comment.author, self.user)
         self.assertEqual(comment.text, text)
-        
+    
+
+    def test_not_auth_add_comment(self):
+        #немного не понял зачем эта проверка? 
+        #за запрет комментариев без авторизации ведь отвечает login_required
+        text = 'test'
+        post = Post.objects.create(text=text,
+                                   author=self.user,
+                                    )
+        self.client_not_authorized.post(reverse('add_comment',
+                                 args=[post.author,
+                                       post.id]),
+                         {'text': text,
+                          'post' : post.id})
+        self.assertEqual(Comment.objects.count(), 0)

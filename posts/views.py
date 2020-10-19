@@ -54,10 +54,7 @@ def add_comment(request,username,post_id):
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    following = False
-    is_following = request.user.is_authenticated and Follow.objects.filter(author__username=username, user=request.user).exists()
-    if is_following:
-        following = True
+    following = request.user.is_authenticated and Follow.objects.filter(author__username=username, user=request.user).exists()
     post_list = author.posts.all()
     paginator = Paginator(post_list, 10)
     page_number = request.GET.get('page')
